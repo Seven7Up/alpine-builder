@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 
 # Alpine Builder For LXD and DOCKER
 
