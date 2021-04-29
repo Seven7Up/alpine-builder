@@ -1,9 +1,13 @@
+<<<<<<< HEAD
 
-# LXD Alpine Linux image builder
+# Alpine Builder For LXD and DOCKER
 
-This script provides a way to create [Alpine Linux](http://alpinelinux.org/)
-images for their use with [LXD](https://linuxcontainers.org/lxd/).
-It's based off the LXC templates.
+
+Alpine Builder container for lxd or docker container. Usually used in pentesting, exactly docker and lxd group permission.
+Based on [https://github.com/saghul/lxd-alpine-builder/].
+
+[Alpine Linux](http://alpinelinux.org/)
+images for their use with [LXD](https://linuxcontainers.org/lxd/) and [DOCKER].
 
 The image will be built just by installing the `alpine-base` meta-package.
 Networking and syslog are enabled by default.
@@ -14,18 +18,17 @@ Networking and syslog are enabled by default.
 In order to build the latest Alpine image just run the script (must be done
 as root):
 
-    sudo ./build-alpine
+    # ./build-alpine
 
 For more options check the help:
 
-    sudo ./build-alpine -h
+    # ./build-alpine -h
 
 After the image is built it can be added as an image to LXD as follows:
 
-    lxc image import alpine-v3.3-x86_64-20160114_2308.tar.gz --alias alpine-v3.3
+    $ lxc image import alpine-{version}-{arch}-{date-and-time}.tar.gz --alias alpine-v3.3
 
+Or for DOCKER like that:
 
-## License
-
-This script uses the same license as the script it was derived from: LGPL 2.1
+		$ docker import alpine-{version}-{arch}-{date-and-time}.tar.gz alpine-v3.3
 
