@@ -3,7 +3,7 @@
 
 
 Alpine Builder container for lxd or docker container. Usually used in pentesting, exactly docker and lxd group permission.
-Based on [https://github.com/saghul/lxd-alpine-builder/].
+Based on [lxd-alpine-builder](https://github.com/saghul/lxd-alpine-builder/) for Saghul.
 
 [Alpine Linux](http://alpinelinux.org/)
 images for their use with [LXD](https://linuxcontainers.org/lxd/) and [DOCKER].
