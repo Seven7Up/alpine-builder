@@ -6,7 +6,7 @@ Alpine Builder container for lxd or docker container. Usually used in pentesting
 Based on [lxd-alpine-builder](https://github.com/saghul/lxd-alpine-builder/) for Saghul.
 
 [Alpine Linux](http://alpinelinux.org/)
-images for their use with [LXD](https://linuxcontainers.org/lxd/) and [DOCKER].
+images for their use with [LXD](https://linuxcontainers.org/lxd/) and [DOCKER](https://docker.com/).
 
 The image will be built just by installing the `alpine-base` meta-package.
 Networking and syslog are enabled by default.
@@ -29,5 +29,5 @@ After the image is built it can be added as an image to LXD as follows:
 
 Or for DOCKER like that:
 
-		$ docker import alpine-{version}-{arch}-{date-and-time}.tar.gz alpine-v3.3
+    $ docker import alpine-{version}-{arch}-{date-and-time}.tar.gz alpine-v3.3
 
