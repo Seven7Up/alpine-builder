@@ -1,0 +1,142 @@
+#!/bin/bash
+
+# Make sure the usual locations are in PATH
+PATH=/usr/sbin:/usr/bin:/sbin:/bin:$PATH
+export PATH
+
+
+get_static_url(){
+	mirror_list=$(mktemp)
+	curl http://dl-cdn.alpinelinux.org/alpine/MIRRORS.txt -o $mirror_list 2>/dev/null
+
+  mirror_count=$(wc -l $mirror_list | cut -d " " -f 1)
+  random=$(hexdump -n 2 -e '/2 "%u"' /dev/urandom)
+  right_random=$(expr $random % $mirror_count + 1)
+  
+	url=$(sed $right_random\!d $mirror_list)
+  echo "arch: $apk_arch"
+  echo "Selecting mirror: $url"
+  rm -f $mirror_list
+}
+
+get_informations(){
+	yaml_path="latest-stable/releases/$apk_arch/latest-releases.yaml"
+  echo -n "Determining the latest release... "
+
+	yaml_file=$(mktemp)
+	curl $url/$yaml_path -o $yaml_file 2>/dev/null
+  
+	release=$(cat $yaml_file |\
+		    grep branch | cut -d ':' -f 2 |\
+				cut -d ' ' -f 2 | uniq)
+
+  if [ -z "$release" ]; then
+		echo "Couldn't get release!"
+    return 1
+  fi
+
+  echo $release
+
+  echo -n "Determining the latest version... "
+	version=$(cat $yaml_file |\
+		    grep version | cut -d ':' -f 2 |\
+				cut -d ' ' -f 2 | uniq)
+
+	if [ -z "$version" ]; then
+		echo "Couldn't get version!"
+    return 1
+  fi
+
+  echo $version
+	
+  echo -n "Determining the file name... "
+	
+  fileName=$(cat $yaml_file |\
+		    grep file | grep minirootfs | cut -d ':' -f 2 |\
+				cut -d ' ' -f 2)
+	
+  if [ -z "$fileName" ]; then
+		echo "Couldn't get file name!"
+    return 1
+  fi
+	
+  echo $fileName
+}
+
+install_alpine(){
+	alpine_path=$url/$release/releases/$apk_arch/$fileName
+  echo "Getting $alpine_path"
+  echo "Please wait"
+  echo -n "Ready ?... "
+	wget $alpine_path 2>/dev/null
+  echo "Done!!"
+}
+
+setup_dockerfile(){
+  cat <<EOF > Dockerfile
+FROM scratch
+ADD $fileName /
+CMD ["/bin/sh"]
+EOF
+  echo "Dockerfile done!"
+}
+
+usage() {
+    cat >&2 <<EOF
+Usage: $(basename $0) [-h|--help] [-r|--repository <url>] [-a|--arch <arch>]
+EOF
+}
+
+if [ $(id -u) -ne 0 ]; then
+   echo "$(basename $0): must be run as root" >&2
+   exit 1
+fi
+
+while [ $# -gt 0 ]; do
+    case "$1" in
+    -h|--help)
+        usage
+        exit 0
+				;;
+    -r|--release)
+        release=$2
+        ;;
+    -a|--arch)
+        arch=$2
+        ;;
+    --)
+	shift
+        break;;
+    esac
+    shift 2
+done
+
+case "$arch" in
+    aarch64)
+        ;;
+			x64)
+				arch=aarch64
+				;;
+    x86 | "")
+      arch=x86
+        ;;
+    x86_64)
+        ;;
+    arm*)
+        arch=armhf
+        ;;
+    *)
+        die "Unsupported architecture: $arch"
+				usage
+        ;;
+esac
+
+apk_arch=$arch
+
+get_static_url || echo "Failed to get alpine mirror url!"
+get_informations || exit
+install_alpine || error=$(echo "Couldn't install alpine!"; exit)
+setup_dockerfile || exit
+echo
+echo "$PWD:"
+ls --color=auto
