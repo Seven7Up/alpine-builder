@@ -268,9 +268,9 @@ fi
 case "$arch" in
     aarch64)
         ;;
-	x64)
-	arch=aarch64
-	;;
+    x64)
+        arch=aarch64
+        ;;
     x86 | "")
     arch=x86
         ;;
