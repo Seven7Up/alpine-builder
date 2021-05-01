@@ -19,7 +19,7 @@ get_static_apk () {
 
     if [ -z "$repository" ]; then
         url=http://dl-cdn.alpinelinux.org/alpine/
-	yaml_path="latest-stable/releases/$apk_arch/latest-releases.yaml"
+        yaml_path="latest-stable/releases/$apk_arch/latest-releases.yaml"
         if [ -z "$release" ]; then
             echo -n "Determining the latest release... "
             release=$(curl $url/$yaml_path 2>/dev/null |\
