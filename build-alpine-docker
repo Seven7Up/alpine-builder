@@ -14,7 +14,7 @@ get_static_url(){
   right_random=$(expr $random % $mirror_count + 1)
   
 	url=$(sed $right_random\!d $mirror_list)
-  echo "arch: $apk_arch"
+  echo "Selected arch: $apk_arch"
   echo "Selecting mirror: $url"
   rm -f $mirror_list
 }
