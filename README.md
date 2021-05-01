@@ -17,11 +17,11 @@ Networking and syslog are enabled by default.
 In order to build the latest Alpine image just run the script (must be done
 as root):
 
-    # ./build-alpine
+    $ sudo ./build-alpine
 
 For more options check the help:
 
-    # ./build-alpine -h
+    $ sudo ./build-alpine -h
 
 After the image is built it can be added as an image to LXD as follows:
 
