@@ -265,23 +265,26 @@ if [ -z "$rootfs" ]; then
     rootfs="$(pwd)/rootfs"
 fi
 
-apk_arch=$arch
-
 case "$arch" in
-    i[3-6]86)
-        apk_arch=x86
+    aarch64)
         ;;
-    x86)
+	x64)
+	arch=aarch64
+	;;
+    x86 | "")
+    arch=x86
         ;;
-    x86_64|"")
+    x86_64)
         ;;
     arm*)
-        apk_arch=armhf
+        arch=armhf
         ;;
     *)
-        die "unsupported architecture: $arch"
+    die "Unsupported architecture: $arch"
         ;;
 esac
+
+apk_arch=$arch
 
 : ${APK:=apk}
 if ! which $APK >/dev/null; then
