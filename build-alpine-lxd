@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 
 # Make sure the usual locations are in PATH
