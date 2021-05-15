@@ -187,20 +187,6 @@ create_metadata() {
         "os": "alpine",
         "release": "$release",
         "variant": "default"
-    },
-    "templates": {
-        "/etc/hostname": {
-            "template": "hostname.tpl",
-            "when": [
-                "create"
-            ]
-        },
-        "/etc/hosts": {
-            "template": "hosts.tpl",
-            "when": [
-                "create"
-            ]
-        }
     }
 }
 EOF
