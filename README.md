@@ -2,7 +2,6 @@
 
 ***
 ## BIG UPDATE:
-
 I maded one which build can build alpine for LXD and DOCKER!
 ****
 
