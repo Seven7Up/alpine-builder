@@ -2,7 +2,7 @@
 
 ***
 ## BIG UPDATE:
-I maded one which build can build alpine for LXD and DOCKER!
+I maded one file which can build alpine for LXD and DOCKER!
 ****
 
 Alpine Builder container for lxd or docker container. Usually used in pentesting, exactly docker and lxd group permission.
