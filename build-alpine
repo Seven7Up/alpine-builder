@@ -1,0 +1,312 @@
+#!/bin/sh
+
+
+# Make sure the usual locations are in PATH
+PATH=/bin:/sbin:/usr/bin:/usr/sbin:$PATH
+export PATH
+
+key_sha256sums="9c102bcc376af1498d549b77bdbfa815ae86faa1d2d82f040e616b18ef2df2d4  alpine-devel@lists.alpinelinux.org-4a6a0840.rsa.pub
+2adcf7ce224f476330b5360ca5edb92fd0bf91c92d83292ed028d7c4e26333ab  alpine-devel@lists.alpinelinux.org-4d07755e.rsa.pub
+ebf31683b56410ecc4c00acd9f6e2839e237a3b62b5ae7ef686705c7ba0396a9  alpine-devel@lists.alpinelinux.org-5243ef4b.rsa.pub
+1bb2a846c0ea4ca9d0e7862f970863857fc33c32f5506098c636a62a726a847b  alpine-devel@lists.alpinelinux.org-524d27bb.rsa.pub
+12f899e55a7691225603d6fb3324940fc51cd7f133e7ead788663c2b7eecb00c  alpine-devel@lists.alpinelinux.org-5261cecb.rsa.pub"
+
+get_static_url(){
+    wget="wget -q -O -"
+    mirror_list=$(mktemp)
+    wget -q http://dl-cdn.alpinelinux.org/alpine/MIRRORS.txt -O "$mirror_list"
+
+    mirror_count=$(wc -l "$mirror_list" | cut -d " " -f 1)
+    random=$((RANDOM))
+    right_random=$(expr "$random" % "$mirror_count" + 1)
+  
+	  url=$(sed "$right_random"\!d "$mirror_list")
+    echo "Selected arch: $apk_arch"
+    echo "Selecting mirror: $url"
+    repo="$url"/latest-stable/main
+}
+
+get_informations(){
+    yaml_path=latest-stable/releases/"$apk_arch"/latest-releases.yaml
+    echo -n "Determining the latest release..."
+
+	  yaml_file=$(mktemp)
+	  wget -q "$url"/"$yaml_path" -O "$yaml_file"
+  
+	  release=$(cat "$yaml_file" |\
+		    grep branch | cut -d ':' -f 2 |\
+				cut -d ' ' -f 2 | uniq)
+
+    if [ -z "$release" ]; then
+		  echo "Couldn't get release!"
+      return 1
+    fi
+
+    echo "$release"
+
+    echo -n "Determining the latest version... "
+	  version=$(cat "$yaml_file" |\
+		    grep version | cut -d ':' -f 2 |\
+				cut -d ' ' -f 2 | uniq)
+
+	  if [ -z "$version" ]; then
+		  echo "Couldn't get version!"
+      return 1
+    fi
+
+    echo "$version"
+    rm -f "$yaml_file"
+}
+
+get_static_apk () {
+    pkglist=alpine-keys:apk-tools-static:alpine-mirrors
+    wget="$wget $repo/$apk_arch"
+
+    # parse APKINDEX to find the current versions
+    static_pkgs=$($wget/APKINDEX.tar.gz | \
+        tar -Oxz APKINDEX | \
+        awk -F: -v pkglist="$pkglist" '
+            BEGIN { split(pkglist,pkg) }
+            $0 != "" { f[$1] = $2 }
+            $0 == "" { for (i in pkg)
+                           if (pkg[i] == f["P"])
+                               print(f["P"] "-" f["V"] ".apk") }')
+
+    [ "$static_pkgs" ] || return 1
+
+    mkdir -p "$rootfs" || return 1
+    for pkg in $static_pkgs; do
+        echo "Downloading $pkg"
+        $wget/$pkg | tar -xz -C "$rootfs"
+    done
+
+    # clean up .apk meta files
+    rm -f "$rootfs"/.[A-Z]*
+
+    # verify checksum of the key
+    keyname=$(echo $rootfs/sbin/apk.static.*.pub | sed 's/.*\.SIGN\.RSA\.//')
+    checksum=$(echo "$key_sha256sums" | grep -w "$keyname")
+    if [ -z "$checksum" ]; then
+        echo "ERROR: checksum is missing for $keyname"
+        return 1
+    fi
+    (cd "$rootfs"/etc/apk/keys && echo "$checksum" | sha256sum -c -) || return 1
+
+    # verify the static apk binary signature
+    APK="$rootfs"/sbin/apk.static
+    openssl dgst -sha1 -verify "$rootfs/etc/apk/keys/$keyname" \
+        -signature "$APK.SIGN.RSA.$keyname" "$APK" || return 1
+}
+
+install_alpine() {
+    mkdir -p "$rootfs"/etc/apk || return 1
+    : ${keys_dir:=/etc/apk/keys}
+    if ! [ -d "$rootfs/etc/apk/keys" ] && [ -d "$keys_dir" ]; then
+        cp -r "$keys_dir" "$rootfs"/etc/apk/keys
+    fi
+    if [ -n "$repo" ]; then
+        echo "$repo" > "$rootfs"/etc/apk/repositories
+    else
+        cp /etc/apk/repositories "$rootfs"/etc/apk/repositories || return 1
+        if [ -n "$release" ]; then
+            sed -E -i "s:/[^/]+/([^/]+)$:/$release/\\1:" \
+                "$rootfs"/etc/apk/repositories
+        fi
+    fi
+    bash="bash bash-doc bash-completion"
+    $APK add -U --initdb --root $rootfs --arch $apk_arch $bash "$@" alpine-base
+}
+
+configure_alpine() {
+    cat >"$rootfs"/etc/inittab<<EOF
+::sysinit:/sbin/rc sysinit
+::sysinit:/sbin/rc boot
+::wait:/sbin/rc default
+::ctrlaltdel:/sbin/reboot
+::shutdown:/sbin/rc shutdown
+EOF
+
+    # configure the network using dhcp
+    cat <<EOF > "$rootfs"/etc/network/interfaces
+auto lo
+iface lo inet loopback
+
+auto eth0
+iface eth0 inet dhcp
+EOF
+
+        # Configure the network using dhcp
+    cat <<EOF > "$rootfs"/etc/network/interfaces
+auto lo
+iface lo inet loopback
+
+auto eth0
+iface eth0 inet dhcp
+EOF
+
+    cat << EOF > "$rootfs"/etc/network/hostname
+alpine
+EOF
+
+    cat << EOF > "$rootfs"/etc/hosts
+127.0.0.1   localhost
+127.0.1.1   alpine.local
+
+# The following lines are desirable for IPv6 capable hosts
+::1     ip6-localhost ip6-loopback
+fe00::0 ip6-localnet
+ff00::0 ip6-mcastprefix
+ff02::1 ip6-allnodes
+ff02::2 ip6-allrouters
+EOF
+
+    # start services
+    ln -s /etc/init.d/bootmisc "$rootfs"/etc/runlevels/boot/bootmisc
+    ln -s /etc/init.d/networking "$rootfs"/etc/runlevels/boot/networking
+    ln -s /etc/init.d/syslog "$rootfs"/etc/runlevels/boot/syslog
+
+    # cleanup
+    rm -rf "$rootfs"/var/cache/apk/*
+    rm -f "$rootfs"/sbin/apk.static*
+
+    return 0
+}
+
+create_metadata() {
+    release_epoch=$(date +%s)
+    release_date=$(date +%Y%m%d_%H:%M)
+
+    cat <<EOF > metadata.yaml
+{
+    "architecture": "$apk_arch",
+    "creation_date": $release_epoch,
+    "properties": {
+        "architecture": "$apk_arch",
+        "description": "alpine $release ($release_date)",
+        "name": "alpine-$release-$release_date",
+        "os": "alpine",
+        "release": "$release",
+        "variant": "default"
+    },
+    "templates": {
+        "/etc/hostname": {
+            "template": "hostname.tpl",
+            "when": [
+                "create"
+            ]
+        },
+        "/etc/hosts": {
+            "template": "hosts.tpl",
+            "when": [
+                "create"
+            ]
+        }
+    }
+}
+EOF
+
+    return 0
+}
+
+package_image() {
+    release_date=$(date +%Y%m%d_%H%M)
+    alpineFile=alpine-${release}-${arch}-${release_date}.tar.gz
+
+    (cd "$rootfs"; tar -zcf ../"$alpineFile" --numeric-owner *)
+    tar -zcf metadata.tar.gz --numeric-owner metadata.yaml
+    rm -f metadata.yaml
+    rm -rf rootfs
+}
+
+setup_dockerfile(){
+  cat <<EOF > Dockerfile
+FROM scratch
+ADD $alpineFile /
+CMD ["/bin/bash"]
+EOF
+  echo "Dockerfile done!"
+}
+
+die() {
+    echo "$@" >&2
+    exit 1
+}
+
+usage() {
+  cat >&2 <<EOF
+Alpine Builder for LXD and DOCKER.
+Usage: $(basename $0) [-h|--help] [-r|--release <version>] [-a|--arch <arch>]
+Supported archs: aarch64
+                x86
+                x86_64
+                armhf
+EOF
+  return 1
+}
+
+
+rootfs="$(pwd)/rootfs"
+release=
+
+if [ $(id -u) -ne 0 ]; then
+   echo "$(basename $0): must be run as root" >&2
+   exit 1
+fi
+
+options=$(getopt -o h:r:R:a: -l help,release:,arch: -- "$@")
+[ $? -eq 0 ] || usage
+eval set -- "$options"
+
+while [ $# -gt 0 ]; do
+    case "$1" in
+    -h|--help)
+        usage
+        exit 0
+				;;
+    -r|--release)
+        release="$2"
+        ;;
+    -a|--arch)
+        arch="$2"
+        ;;
+      --)
+        break;;
+    esac
+done
+
+case "$arch" in
+    aarch64)
+        ;;
+			x64)
+				arch=aarch64
+				;;
+    x86 | "")
+      arch=x86
+        ;;
+    x86_64)
+        ;;
+    arm*)
+        arch=armhf
+        ;;
+    *)
+        die "Unsupported architecture: $arch"
+				usage
+        ;;
+esac
+
+apk_arch="$arch"
+
+: ${APK:=apk}
+if ! which $APK >/dev/null; then
+    get_static_url || die "Failed to get a valid url"
+    get_informations || exit 1
+    get_static_apk || die "Failed to download a valid static apk"
+fi
+
+install_alpine "$@" || die "Failed to install rootfs"
+configure_alpine || die "Failed to configure rootfs"
+create_metadata || die "Failed to create metadata"
+package_image || die "Failed to package image"
+setup_dockerfile || die "Failed to setup Dockerfile"
+
+chmod a=rw $alpineFile metadata.tar.gz Dockerfile
