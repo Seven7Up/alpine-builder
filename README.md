@@ -27,7 +27,7 @@ For more options check the help:
 
 After the image is built it can be added as an image to LXD as follows:
 
-    $ lxc image import alpine-{version}-{arch}-{date-and-time}.tar.gz --alias alpine-v3.3
+    $ lxc image import alpine-{version}-{arch}-{date-and-time}.tar.gz metadata.tar.gz --alias alpine-v3.3
 
 ### For Docker:
 

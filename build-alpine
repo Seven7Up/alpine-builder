@@ -221,7 +221,7 @@ die() {
 usage() {
   cat >&2 <<EOF
 Alpine Builder for LXD and DOCKER.
-Usage: $(basename $0) [-h|--help] [-r|--release <version>] [-a|--arch <arch>]
+Usage: $(basename $0) [-h|--help] [-r|--release <version>] [-a|--arch <arch>] [ <app to install (like zsh)> ]
 Supported archs: aarch64
                 x86
                 x86_64
