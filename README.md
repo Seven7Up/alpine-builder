@@ -1,8 +1,8 @@
 # Alpine Builder For LXD and DOCKER
 
+***
 ## BIG UPDATE:
 
-****info
 I maded one which build can build alpine for LXD and DOCKER!
 ****
 
