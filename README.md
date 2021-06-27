@@ -39,6 +39,6 @@ For help:
 
     sudo ./build-alpine -h
 
-After building image an **Dockerfile** WILL BE created, you should run it like that:
+After building image a **Dockerfile** WILL BE created, you should run it like that:
 
     docker build . -t $USER/alpine:0.1
