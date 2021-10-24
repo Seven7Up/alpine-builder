@@ -289,10 +289,10 @@ case "$arch" in
 			x64)
 				arch=aarch64
 				;;
-    x86 | "")
-      arch=x86
+    x86)
         ;;
-    x86_64)
+    x86_64 | "")
+        arch=x86_64
         ;;
     arm*)
         arch=armhf
