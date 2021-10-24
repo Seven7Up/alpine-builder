@@ -191,23 +191,42 @@ create_metadata() {
 }
 EOF
 
+    mkdir -p templates
+
+    cat <<EOF > templates/hostname.tpl
+{{ container.name }}
+EOF
+
+    cat <<EOF > templates/hosts.tpl
+127.0.0.1   localhost
+127.0.1.1   {{ container.name }}
+# The following lines are desirable for IPv6 capable hosts
+::1     ip6-localhost ip6-loopback
+fe00::0 ip6-localnet
+ff00::0 ip6-mcastprefix
+ff02::1 ip6-allnodes
+ff02::2 ip6-allrouters
+EOF
+
     return 0
 }
 
 package_image() {
     release_date=$(date +%Y%m%d_%H%M)
-    alpineFile=alpine-${release}-${arch}-${release_date}.tar.gz
+    lxd_alpine=lxd-alpine-${release}-${arch}-${release_date}.tar.gz
+    docker_alpine=docker-alpine-${release}-${arch}-${release_date}.tar.gz
 
-    (cd "$rootfs"; tar -zcf ../"$alpineFile" --numeric-owner *)
-    tar -zcf metadata.tar.gz --numeric-owner metadata.yaml
+    (cd "$rootfs"; tar -zcf ../"$docker_alpine" --numeric-owner *)
+    tar -zcf $lxd_alpine --numeric-owner metadata.yaml templates rootfs
     rm -f metadata.yaml
+    rm -rf templates
     rm -rf rootfs
 }
 
 setup_dockerfile(){
   cat <<EOF > Dockerfile
 FROM scratch
-ADD $alpineFile /
+ADD $docker_alpine /
 CMD ["/bin/bash"]
 EOF
   echo "Dockerfile done!"

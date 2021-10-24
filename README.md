@@ -1,9 +1,5 @@
 # Alpine Builder For LXD and DOCKER
 
-***
-## BIG UPDATE:
-I maded one file which can build alpine for LXD and DOCKER!
-****
 
 Alpine Builder container for lxd or docker container. Usually used in pentesting, exactly docker and lxd group permission.
 Based on [lxd-alpine-builder](https://github.com/saghul/lxd-alpine-builder/) for Saghul.
@@ -19,26 +15,38 @@ Networking and syslog are enabled by default.
 
 In order to build the latest Alpine image just run the script (must be done as root):
 
-    sudo ./build-alpine
+```bash
+sudo ./build-alpine
+```
 
 For more options check the help:
 
-    sudo ./build-alpine -h
+```bash
+sudo ./build-alpine -h
+```
 
 After the image is built it can be added as an image to LXD as follows:
 
-    lxc image import alpine-{version}-{arch}-{date-and-time}.tar.gz metadata.tar.gz --alias alpine-v3.3
+```bash
+lxc image import lxd-alpine-{version}-{arch}-{date-and-time}.tar.gz --alias alpine-v3.3
+```
 
 ### For Docker:
 
 First build latest image like that:
 
-    sudo ./build-alpine
+```bash
+sudo ./build-alpine
+```
 
 For help:
 
-    sudo ./build-alpine -h
+```bash
+sudo ./build-alpine -h
+```
 
 After building image a **Dockerfile** WILL BE created, you should run it like that:
 
-    docker build . -t $USER/alpine:0.1
+```bash
+docker build . -t $USER/alpine:0.1
+```
