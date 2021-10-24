@@ -252,6 +252,7 @@ EOF
 
 rootfs="$(pwd)/rootfs"
 release=
+to_install=
 
 if [ $(id -u) -ne 0 ]; then
    echo "$(basename $0): must be run as root" >&2
@@ -274,8 +275,11 @@ while [ $# -gt 0 ]; do
     -a|--arch)
         arch="$2"
         ;;
-      --)
-        break;;
+      *)
+          to_install="$to_install $1"
+        ;;
+    --)
+        break;
     esac
 done
 
@@ -308,10 +312,10 @@ if ! which $APK >/dev/null; then
     get_static_apk || die "Failed to download a valid static apk"
 fi
 
-install_alpine "$@" || die "Failed to install rootfs"
+install_alpine "$to_install" || die "Failed to install rootfs"
 configure_alpine || die "Failed to configure rootfs"
 create_metadata || die "Failed to create metadata"
 package_image || die "Failed to package image"
 setup_dockerfile || die "Failed to setup Dockerfile"
 
-chmod a=rw $alpineFile metadata.tar.gz Dockerfile
+chmod a=rw $docker_alpine $lxd_alpine Dockerfile
