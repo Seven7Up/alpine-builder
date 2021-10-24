@@ -199,7 +199,7 @@ EOF
 package_image() {
     release_date=$(date +%Y%m%d_%H%M)
 
-    (cd "$rootfs" && tar -zcf docker-alpine-$release-$arch-$release_date.tar.gz --numeric-owner *)
+    (cd "$rootfs" && tar -zcf ../docker-alpine-$release-$arch-$release_date.tar.gz --numeric-owner *)
     tar -zcf lxd-alpine-$release-$arch-$release_date.tar.gz --numeric-owner metadata.yaml templates rootfs
     rm -f metadata.yaml
     rm -rf templates
