@@ -196,6 +196,16 @@ EOF
     return 0
 }
 
+create_dockerfile(){
+    cat << EOF > Dockerfile
+FROM scratch
+ADD docker-alpine-$release-$arch-$release_date.tar.gz /
+CMD ["/bin/bash"]
+EOF
+
+    return 0
+}
+
 package_image() {
     release_date=$(date +%Y%m%d_%H%M)
 
@@ -291,5 +301,6 @@ fi
 install_alpine "$@" || die "Failed to install rootfs"
 configure_alpine || die "Failed to configure rootfs"
 create_metadata || die "Failed to create metadata"
+create_dockerfile || die "Failed to create dockerfile"
 package_image || die "Failed to package image"
 
